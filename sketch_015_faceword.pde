@@ -1,6 +1,6 @@
 String[] linesFromFile;
 String oneLongString;
-Table table, myCsv, tableWord;
+Table table, myCsv, tableWord, tableCount;
 int iterate = 0;
 
 PrintWriter testplik;
@@ -33,6 +33,11 @@ void makeTable() {
   tableWord.addColumn("date");
   tableWord.addColumn("time");
   tableWord.addColumn("message");
+
+  tableCount = new Table();
+  tableCount.addColumn("id");
+  tableCount.addColumn("date");
+  tableCount.addColumn("number");
 }
 
 void seperateMessages(boolean searching) {
@@ -99,7 +104,7 @@ void lookupWord(String user, String word) {
     TableRow newRow = myCsv.getRow(i);
     String[] imie = match(newRow.getString("user"), user);
     if (imie != null) {
-      String[] match = match(newRow.getString("message"), "(K|k)+(U|u)+(R|r)+(W|w)+");
+      String[] match = match(newRow.getString("message"), "(K|k)+(R|r)+(U|u)+(C|c)+(i|I)+");
       if (match != null) {
         TableRow newRowWord = tableWord.addRow();
         newRowWord.setInt(   "id", tableWord.getRowCount());
@@ -107,12 +112,56 @@ void lookupWord(String user, String word) {
         newRowWord.setString("date", newRow.getString("date"));
         newRowWord.setString("time", newRow.getString("time"));
         newRowWord.setString("message", newRow.getString("message"));
-        println("Found >" + word + "< in line " + newRow.getInt("id"));
       }
     }
   }
   saveTable(tableWord, "E:\\workspace_processing\\sketch_015_data\\test3.csv");
+  println("Table tableWord saved");
   noLoop();
+}
+
+void countWord() {
+  TableRow countRow = tableCount.addRow();
+  TableRow wordRow  = tableWord.getRow(0);
+  countRow.setInt("id", 1);
+  countRow.setString("date", wordRow.getString("date"));
+  countRow.setInt("number", 0);
+  println(tableCount.getRowCount());
+
+  boolean newDate = false;
+  println("Counting started");
+  //println("tableWord row Count " + tableWord.getRowCount());  
+  for (int i = 0; i < tableWord.getRowCount(); i++) {
+    wordRow = tableWord.getRow(i);
+    println("tableCount row Count " + tableCount.getRowCount());  
+    for (int j = 0; j < tableCount.getRowCount(); j++) {
+      countRow = tableCount.getRow(j);
+      //println(wordRow.getString("date") + " : " + countRow.getString("date") + " = " + 
+      //wordRow.getString("date") == countRow.getString("date"));
+      String first = wordRow.getString("date");
+      String second = countRow.getString("date");
+      String[] match = match(first, second);
+      println(first + " : " + second);
+      if (match != null) {
+        println("Dodano numer");
+        countRow.setInt("number", countRow.getInt("number") + 1);
+        //println("Numer " + countRow.getInt("number"));
+        newDate = false;
+        break;
+      } else {
+        newDate = true;
+      }
+    }
+    if (newDate) {
+      println("New Date created " + wordRow.getString("date"));
+      countRow = tableCount.addRow();
+      countRow.setInt("id", tableCount.getRowCount());
+      countRow.setString("date", wordRow.getString("date"));
+      countRow.setInt("number", 1);
+      println("tableCount row Count " + tableCount.getRowCount());
+    }
+  }
+  saveTable(tableCount, "E:\\workspace_processing\\sketch_015_data\\test4.csv");
 }
 
 void setup() {
@@ -133,5 +182,6 @@ void draw() {
   //loadStringsIntoString(iterate);
   //seperateMessages(true);
   lookupWord("Paweł Zarembski", "kurwa");
+  countWord();
   iterate++;
 }
